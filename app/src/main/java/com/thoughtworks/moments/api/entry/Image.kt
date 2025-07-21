@@ -3,9 +3,6 @@ package com.thoughtworks.moments.api.entry
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class User(
-  val username: String?,
-  val profileImage: String?,
-  val avatar: String?,
-  val nick: String?,
+data class Image(
+    val url: String?
 )
