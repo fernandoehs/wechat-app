@@ -26,7 +26,8 @@ class MainViewModel(
   private fun loadUser() {
     viewModelScope.launch {
       try {
-        user.emit(repository.fetchUser())
+        val result = repository.fetchUser()
+        user.emit(result)
       } catch (e: Exception) {
         e.printStackTrace()
       }
@@ -46,8 +47,9 @@ class MainViewModel(
         e.printStackTrace()
         emptyList()
       }
+      val validated = allTweets.filter { !it.content.isNullOrEmpty() }
 
-      _tweetsList.addAll(allTweets.subList(0, PAGE_TWEET_COUNT.coerceAtMost(allTweets.size)))
+      _tweetsList.addAll(validated.subList(0, PAGE_TWEET_COUNT.coerceAtMost(allTweets.size)))
       tweets.emit(_tweetsList)
     }
   }
