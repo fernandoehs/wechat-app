@@ -6,6 +6,7 @@ import com.thoughtworks.moments.api.MomentRepository
 import com.thoughtworks.moments.api.entry.Tweet
 import com.thoughtworks.moments.api.entry.User
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(
@@ -34,10 +35,13 @@ class MainViewModel(
     }
   }
 
-  val tweets: MutableStateFlow<List<Tweet>> = MutableStateFlow<List<Tweet>>(emptyList())
+  private val _tweets: MutableStateFlow<List<Tweet>> = MutableStateFlow<List<Tweet>>(emptyList())
+  val tweets: StateFlow<List<Tweet>> = _tweets
 
   private val _tweetsList = mutableListOf<Tweet>()
   private var allTweets: List<Tweet> = emptyList()
+  private var isLoading = false
+  private var currentPage = 0
 
   private fun loadTweets() {
     viewModelScope.launch {
@@ -47,17 +51,33 @@ class MainViewModel(
         e.printStackTrace()
         emptyList()
       }
-      val validated = allTweets.filter { !it.content.isNullOrEmpty() }
-
-      _tweetsList.addAll(validated.subList(0, PAGE_TWEET_COUNT.coerceAtMost(allTweets.size)))
-      tweets.emit(_tweetsList)
+      _tweetsList.clear()
+      currentPage = 0
+      loadMoreTweets()
     }
   }
 
   fun loadMoreTweets() {
+    if (isLoading) return
+    isLoading = true
+
     viewModelScope.launch {
       // TODO: Implement Pagination
-      tweets.emit(_tweetsList)
+      val from = currentPage * PAGE_TWEET_COUNT
+      val to = ((currentPage + 1) * PAGE_TWEET_COUNT).coerceAtMost(allTweets.size)
+
+      if (from < to) {
+        val next = allTweets.subList(from, to)
+
+        val validated = next.filter {
+          !it.content.isNullOrEmpty()
+        }
+
+        _tweetsList.addAll(validated)
+        _tweets.emit(_tweetsList.toList())
+        currentPage++
+      }
+      isLoading = false
     }
   }
 }

@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
 data class User(
   val username: String?,
   @Json(name = "profile-image")
-  val profileImage: String?,
-  val avatar: String?,
-  val nick: String?,
+  val profileImage: String? = null,
+  val avatar: String? = null,
+  val nick: String? = null,
 )

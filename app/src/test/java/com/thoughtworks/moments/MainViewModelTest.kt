@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert
@@ -28,26 +29,33 @@ class MainViewModelTest {
     Tweet(content = "Tweet no. $it")
   }
   private val user = User(username = "some user")
-  private val repository: MomentRepository = mockk() {
-    coEvery {
-      fetchTweets()
-    } returns tweets
-    coEvery {
-      fetchUser()
-    } returns user
-  }
-  private val mainViewModel by lazy {
-    MainViewModel(repository)
-  }
+
+  private lateinit var mainViewModel: MainViewModel
+  private lateinit var repository: MomentRepository
 
   @OptIn(ExperimentalCoroutinesApi::class)
   @Before
   fun setup() {
     Dispatchers.setMain(testDispatcher)
+
+    repository = mockk() {
+      coEvery {
+        fetchTweets()
+      } returns tweets
+      coEvery {
+        fetchUser()
+      } returns user
+    }
+
+    mainViewModel = MainViewModel(repository)
   }
 
   @Test
   fun initialize_tweets_with_empty_list() = runTest {
+
+    coEvery { repository.fetchTweets() } returns emptyList()
+    mainViewModel = MainViewModel(repository)
+
     mainViewModel.tweets.test {
       Assert.assertEquals(emptyList<Tweet>(), awaitItem())
       cancelAndConsumeRemainingEvents()
@@ -57,12 +65,6 @@ class MainViewModelTest {
   // TODO : Fix this test
   @Test
   fun fetch_tweets_on_initialization() = runTest {
-    coEvery {
-      repository.fetchTweets()
-    } returns tweets
-    coEvery {
-      repository.fetchUser()
-    } returns User(username = "some user")
 
     val expected = tweets.subList(0, 5)
 
@@ -73,8 +75,19 @@ class MainViewModelTest {
 
   @Test
   fun load_more_tweets_add_5_more_items() = runTest {
+
+    val expected = tweets.subList(0, 10)
+
+    advanceUntilIdle()
+
     mainViewModel.tweets.test {
       // TODO : Complete this test before coding for pagination
+      val firstPage = awaitItem()
+      mainViewModel.loadMoreTweets()
+      advanceUntilIdle()
+      val secondPage = awaitItem()
+      Assert.assertEquals(expected, secondPage)
+      cancelAndConsumeRemainingEvents()
     }
   }
 }

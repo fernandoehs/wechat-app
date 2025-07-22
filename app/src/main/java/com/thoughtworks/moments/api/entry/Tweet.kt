@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
 data class Tweet(
   val content: String?,
   val error: String? = null,
-  val images: List<Image>?,
-  val sender: User?,
-  val comments: List<Comment>?,
+  val images: List<Image>? = null,
+  val sender: User? = null,
+  val comments: List<Comment>? = null,
 )
